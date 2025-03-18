@@ -1,39 +1,43 @@
 import requests
 
+
 def fetch_definitions(word):
     try:
         url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
-        response = requests.get(url)
-        response.raise_for_status()  # Verifica si la solicitud fue exitosa
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error al obtener las definiciones: {e}")
-        return {}
+    except requests.exceptions.HTTPError as e:
+        print(f"Error HTTP: {e}")
+        return []
+    except Exception as e:
+        print(f"Error general: {e}")
+        return []
 
-def get_phonetic(word):
-    definitions = fetch_definitions(word)
-    if not definitions:
-        return None  # Si no hay definición, devuelve None
-    phonetics = definitions[0].get("phonetics", [])
-    for phonetic in phonetics:
-        if "audio" in phonetic and "us.mp3" in phonetic["audio"]:
-            return phonetic.get("text")
-    return None  # Retorna None si no encuentra fonética
 
-def get_audio(word):
-    definitions = fetch_definitions(word)
+def _get_phonetic_data(definitions, target_key):
     if not definitions:
-        return None  # Si no hay definición, devuelve None
-    phonetics = definitions[0].get("phonetics", [])
-    for phonetic in phonetics:
-        if "audio" in phonetic and "us.mp3" in phonetic["audio"]:
-            return phonetic.get("audio")
-    return None  # Retorna None si no encuentra audio
+        return None
+
+    for phonetic in definitions[0].get("phonetics", []):
+        audio = phonetic.get("audio", "")
+        if audio and phonetic.get(target_key):
+            return phonetic[target_key]
+    return None
+
+
+def get_phonetic(definitions):
+    return _get_phonetic_data(definitions, "text")
+
+
+def get_audio(definitions):
+    return _get_phonetic_data(definitions, "audio")
+
 
 def store_data(word):
-    data = {}
-    data["word"] = word
-    data["phonetic"] = get_phonetic(word)
-    data["audio"] = get_audio(word)
-    return data
-
+    definitions = fetch_definitions(word)
+    return {
+        "word": word,
+        "phonetic": get_phonetic(definitions),
+        "audio": get_audio(definitions)
+    }
