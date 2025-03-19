@@ -14,7 +14,7 @@ def get_first_result_dict(word):
     driver = webdriver.Chrome(options=options)
 
     try:
-        driver.get(f"https://tatoeba.org/en/sentences/search?query={word}&from=eng&to=spa")
+        driver.get(f"https://tatoeba.org/en/sentences/search?from=eng&has_audio=&list=&native=&original=&orphans=no&query={word}&sort=relevance&sort_reverse=&tags=&to=spa&trans_filter=limit&trans_has_audio=&trans_link=&trans_orphan=&trans_to=spa&trans_unapproved=&trans_user=&unapproved=no&user=&word_count_max=&word_count_min=6")
 
         wait = WebDriverWait(driver, 15)
         example_block = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.sentence-and-translations")))

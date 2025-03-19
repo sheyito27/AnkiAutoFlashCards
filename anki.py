@@ -1,7 +1,11 @@
 import requests
 from html import escape
+import os
 import context
 import speech
+from urllib.parse import quote
+
+import translation
 
 
 def add_flashcard(word):
@@ -9,38 +13,53 @@ def add_flashcard(word):
         # Obtener datos
         context_data = context.get_first_result_dict(word)
         example_sentence = context_data["en"]
-        translation = context_data["es"]
+        translated_text = context_data["es"]
+        translated_word = translation.translate(word)
+
+        # Definir nombres de archivo
+        word_audio = f"{word}.mp3"
+        example_audio = f"{word}_example.mp3"
 
         # Generar audios
-        speech.generate_audio(word, f"{word}.mp3")  # Audio de la palabra
-        speech.generate_audio(example_sentence, f"{word}_example.mp3")  # Audio del ejemplo
+        speech.generate_audio(word, word_audio)
+        speech.generate_audio(example_sentence, example_audio)
+
+        # Verificar archivos de audio
+        if not (os.path.exists(word_audio) and os.path.exists(example_audio)):
+            raise FileNotFoundError(f"Archivos de audio no encontrados: {word_audio}, {example_audio}")
+
+        # Codificar nombres de archivo
+        encoded_word = quote(word)
+        encoded_example = quote(example_audio)
 
         # Construir HTML
         front_html = f'''
-        <div style="text-align: center;">
-            <h1>{escape(word)}</h1>
-            <audio controls>
-                <source src="{word}.mp3" type="audio/mpeg">
-            </audio>
-        </div>
-        '''
-
-        back_html = f'''
-        <div style="text-align: center;">
-            <div class="example">
-                <p>{escape(example_sentence)}</p>
-                <audio controls style="margin: 10px 0;">
-                    <source src="{word}_example.mp3" type="audio/mpeg">
-                </audio>
-                <button onclick="this.nextElementSibling.style.display='block';this.style.display='none'">
-                    Mostrar traducción
-                </button>
-                <p style="display: none; color: #666;">{escape(translation)}</p>
+        <div class="flashcard">
+            <div class="content">
+                <p>{escape(word)}</p>
+                <div class="audio-container">
+                </div>
             </div>
         </div>
         '''
 
-        # Crear nota en Anki (CORRECCIÓN CLAVE AQUÍ)
+        back_html = f'''
+        <div class="flashcard">
+            <div class="content">
+                <p>{translated_word}</p>
+                <hr class="divider" />
+                <p class="sentence-text">"{escape(example_sentence)}"</p>
+                <button class="hint" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">
+                    Mostrar traducción
+                </button>
+                <p class="translation-text" style="display: none;">{escape(translated_text)}</p>
+                <div class="audio-container">
+                </div>
+            </div>
+        </div>
+        '''
+
+        # Crear nota en Anki
         payload = {
             "action": "addNote",
             "version": 6,
@@ -53,13 +72,15 @@ def add_flashcard(word):
                         "Back": back_html
                     },
                     "tags": ["auto-generated"],
-                    "audio": [  # Lista de diccionarios CORRECTAMENTE formateada
+                    "audio": [
                         {
-                            "filename": f"{word}.mp3",
+                            "filename": word_audio,
+                            "path": os.path.abspath(word_audio),
                             "fields": ["Front"]
                         },
                         {
-                            "filename": f"{word}_example.mp3",
+                            "filename": example_audio,
+                            "path": os.path.abspath(example_audio),
                             "fields": ["Back"]
                         }
                     ]
@@ -74,6 +95,5 @@ def add_flashcard(word):
         print(f"Error: {e}")
         return None
 
-
 if __name__ == "__main__":
-    add_flashcard("heart")
+    add_flashcard("furthermore")
