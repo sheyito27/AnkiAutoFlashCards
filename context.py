@@ -7,9 +7,9 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def get_first_result_dict(word):
     options = Options()
-    options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("user-agent=Mozilla/5.0...")
+    options.add_argument("--headless")
 
     driver = webdriver.Chrome(options=options)
 

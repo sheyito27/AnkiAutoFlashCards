@@ -32,31 +32,42 @@ def add_flashcard(word):
         encoded_word = quote(word)
         encoded_example = quote(example_audio)
 
+        # Leer el contenido del archivo style.css y guardarlo en una variable
+        with open("style.css", "r", encoding="utf-8") as archivo_css:
+            CSS = archivo_css.read()
+
         # Construir HTML
         front_html = f'''
-        <div class="flashcard">
-            <div class="content">
-                <p>{escape(word)}</p>
-                <div class="audio-container">
-                </div>
+         <style>
+            {CSS}
+        </style>
+        <sytle>
+        </style>
+         <div class="flashcard">
+        <div class="content">
+            <p class="word">{escape(word)}</p>
+            <div class="audio-container">
             </div>
         </div>
+        <div>
         '''
 
         back_html = f'''
-        <div class="flashcard">
+        <style>
+            {CSS}
+        </style>
+        <div>
             <div class="content">
-                <p>{translated_word}</p>
-                <hr class="divider" />
-                <p class="sentence-text">"{escape(example_sentence)}"</p>
+                <p class="translated-word">{translated_word}</p>
+                <p class="sentence-text">{escape(example_sentence)}</p>
                 <button class="hint" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">
                     Mostrar traducción
                 </button>
                 <p class="translation-text" style="display: none;">{escape(translated_text)}</p>
-                <div class="audio-container">
-                </div>
-            </div>
+            <div class="audio-container">
         </div>
+        </div>
+    </div>
         '''
 
         # Crear nota en Anki
@@ -96,4 +107,4 @@ def add_flashcard(word):
         return None
 
 if __name__ == "__main__":
-    add_flashcard("furthermore")
+    add_flashcard(input("Introduce una palabra: "))
